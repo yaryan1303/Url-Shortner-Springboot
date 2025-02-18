@@ -1,10 +1,14 @@
-package com.url.shortner.service;
+package com.url.shortner.security.jwt;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
+
+import com.url.shortner.service.UserDetailsImpl;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -38,8 +42,28 @@ public class JwtUtils {
         .expiration(new Date(new Date().getTime() + 172800000)).signWith(key()).compact();
   }
 
+  public String getUsernameFromToken(String token) {
+    return Jwts.parser()
+        .verifyWith((SecretKey) key())
+        .build()
+        .parseSignedClaims(token)
+        .getPayload()
+        .getSubject();
+
+  }
+
   private Key key() {
     return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+  }
+
+  public boolean validateToken(String token) {
+    try {
+      Jwts.parser().verifyWith((SecretKey) key()).build().parseSignedClaims(token);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+
   }
 
 }
